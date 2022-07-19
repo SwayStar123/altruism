@@ -1,8 +1,28 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, Mint, MintTo, TokenAccount};
 
-pub fn mint_tokens(ctx: Context<MintTokens>) -> Result<()> {
-    token::mint_to(ctx.accounts.cpi_ctx(), 50)?;
+use crate::instructions::initialize::Vault;
+
+pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
+    // creating SOL transfer instruction
+    let ix = anchor_lang::solana_program::system_instruction::transfer(
+        ctx.accounts.mint_authority.signer_key().unwrap(), 
+        &ctx.accounts.vault.key(), 
+        amount
+    );
+
+    // invoking SOL transfer instruction
+    anchor_lang::solana_program::program::invoke(
+        &ix,
+        &[
+            // from
+            ctx.accounts.mint_authority.to_account_info(),
+            // to
+            ctx.accounts.vault.to_account_info(),
+        ]
+    )?;
+
+    token::mint_to(ctx.accounts.cpi_ctx(), amount)?;
     Ok(())
 }
 
@@ -12,8 +32,11 @@ pub struct MintTokens<'info> {
     pub token: Account<'info, TokenAccount>,
     #[account(mut)]
     pub mint: Account<'info, Mint>,
+    #[account(mut)]
     pub mint_authority: Signer<'info>,
     pub token_program: Program<'info, Token>,
+    #[account(mut, seeds=[b"vault"], bump = vault.bump)]
+    pub vault: Account<'info, Vault>,
 }
 
 
