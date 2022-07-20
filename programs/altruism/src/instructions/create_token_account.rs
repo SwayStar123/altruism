@@ -20,7 +20,7 @@ pub struct CreateTokenAccount<'info> {
     #[account(
         init,
         payer = authority,
-        space = 49 + 8,
+        space = 41 + 8,
         seeds = [b"vault", authority.key().as_ref()],
         bump
     )]
@@ -36,7 +36,6 @@ pub struct CreateTokenAccount<'info> {
 #[account]
 pub struct Vault {
     pub authority: Pubkey, //32
-    pub balance: u64, // 8
     pub deposited: u64, // 8
     pub bump: u8, // 1
 }
