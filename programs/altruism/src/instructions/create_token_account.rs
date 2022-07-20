@@ -32,7 +32,7 @@ pub struct CreateTokenAccount<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-// 32 + 8 + 8 + 1 + 8
+// 32 + 8 + 1 + 8
 #[account]
 pub struct Vault {
     pub authority: Pubkey, //32
