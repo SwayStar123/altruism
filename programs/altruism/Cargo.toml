@@ -21,3 +21,4 @@ overflow-checks = true
 [dependencies]
 anchor-lang = "0.24.2"
 anchor-spl = "0.24.2"
+marinade-0_24_2 = { git = "https://github.com/SwayStar123/marinade-0_24_2" }

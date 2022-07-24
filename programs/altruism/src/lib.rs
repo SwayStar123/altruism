@@ -17,7 +17,7 @@ pub mod altruism {
         instructions::create_token_account::create_token_account(ctx)
     }
 
-    pub fn mint_tokens(ctx: Context<MintTokens>, amount: u64) -> Result<()> {
-        instructions::mint_tokens::mint_tokens(ctx, amount)
+    pub fn mint_tokens(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        instructions::deposit::deposit(ctx, amount)
     }
 }
