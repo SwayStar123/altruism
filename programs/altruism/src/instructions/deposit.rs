@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, Mint, MintTo, TokenAccount};
 
-use crate::instructions::create_token_account::Vault;
+use crate::instructions::{create_token_account::Vault, initialize::State};
 
 use marinade_0_24_2::cpi;
 
@@ -17,9 +17,10 @@ pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
+    pub state: Account<'info, State>,
     #[account(mut, has_one = mint)]
     pub token: Account<'info, TokenAccount>,
-    #[account(mut)]
+    #[account(mut, address = state.alt_sol_mint_pubkey)]
     pub mint: Account<'info, Mint>,
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -29,7 +30,7 @@ pub struct Deposit<'info> {
 
     // this part is equivalent to marinade-finance deposit instructions
     #[account(mut)]
-    pub state: AccountInfo<'info>, // marinade state
+    pub marinade_state: AccountInfo<'info>, // marinade state
     #[account(mut)]
     pub msol_mint: AccountInfo<'info>,
     #[account(mut)]
@@ -65,7 +66,7 @@ impl<'info> Deposit<'info> {
         &self,
     ) -> CpiContext<'_, '_, '_, 'info, cpi::accounts::Deposit<'info>> {
         let cpi_accounts = cpi::accounts::Deposit {
-            state: self.state.clone(),
+            state: self.marinade_state.clone(),
             msol_mint: self.msol_mint.clone(),
             liq_pool_sol_leg_pda: self.liq_pool_sol_leg_pda.clone(),
             liq_pool_msol_leg: self.liq_pool_msol_leg.clone(),
