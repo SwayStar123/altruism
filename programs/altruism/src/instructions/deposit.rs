@@ -32,7 +32,7 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub marinade_state: AccountInfo<'info>, // marinade state
     #[account(mut)]
-    pub msol_mint: AccountInfo<'info>,
+    pub msol_mint: Account<'info, Mint>,
     #[account(mut)]
     pub liq_pool_sol_leg_pda: AccountInfo<'info>,
     #[account(mut)]
@@ -40,10 +40,17 @@ pub struct Deposit<'info> {
     pub liq_pool_msol_leg_authority: AccountInfo<'info>,
     #[account(mut)]
     pub reserve_pda: AccountInfo<'info>,
-    #[account(mut)]
-    pub mint_to: AccountInfo<'info>,
+    #[account(
+        init,
+        payer = authority,
+        token::mint = msol_mint,
+        token::authority = vault,
+    )]
+    pub mint_to: Account<'info, TokenAccount>,
     pub msol_mint_authority: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
     pub system_program: AccountInfo<'info>,
+    
 
     #[account(address = marinade_0_24_2::ID)]
     pub marinade_finance_program: AccountInfo<'info>
@@ -67,13 +74,13 @@ impl<'info> Deposit<'info> {
     ) -> CpiContext<'_, '_, '_, 'info, cpi::accounts::Deposit<'info>> {
         let cpi_accounts = cpi::accounts::Deposit {
             state: self.marinade_state.clone(),
-            msol_mint: self.msol_mint.clone(),
+            msol_mint: self.msol_mint.to_account_info(),
             liq_pool_sol_leg_pda: self.liq_pool_sol_leg_pda.clone(),
             liq_pool_msol_leg: self.liq_pool_msol_leg.clone(),
             liq_pool_msol_leg_authority: self.liq_pool_msol_leg_authority.clone(),
             reserve_pda: self.reserve_pda.clone(),
             transfer_from: self.authority.to_account_info(),
-            mint_to: self.mint_to.clone(),
+            mint_to: self.mint_to.to_account_info(),
             msol_mint_authority: self.msol_mint_authority.clone(),
             system_program: self.system_program.clone(),
             token_program: self.token_program.to_account_info(),
