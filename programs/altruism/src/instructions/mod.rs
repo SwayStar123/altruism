@@ -9,3 +9,6 @@ pub use deposit::*;
 
 pub mod order_unstake;
 pub use order_unstake::*;
+
+pub mod claim_withdrawal;
+pub use claim_withdrawal::*;
