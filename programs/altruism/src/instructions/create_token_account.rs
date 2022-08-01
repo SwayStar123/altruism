@@ -36,7 +36,7 @@ pub struct CreateTokenAccount<'info> {
     #[account(
         init,
         payer = authority,
-        space = 41 + 8,
+        space = 10 + 8,
         seeds = [b"vault", authority.key().as_ref()],
         bump
     )]
@@ -53,10 +53,11 @@ pub struct CreateTokenAccount<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-// 32 + 8 + 1 + 8
+// 1 + 8 + 1
 #[account]
 pub struct Vault {
-    pub authority: Pubkey, //32
+    // used to keep track of whether or not the user is withdrawing their funds ATM
+    pub withdrawing: bool, // 1
     pub deposited: u64, // 8
     pub bump: u8, // 1
 }

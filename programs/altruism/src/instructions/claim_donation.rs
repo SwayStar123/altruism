@@ -5,30 +5,22 @@ use crate::instructions::create_token_account::Vault;
 use marinade_0_24_2::cpi;
 
 
-pub fn claim_withdrawal(ctx: Context<ClaimWithdrawal>) -> Result<()> {
-    assert!(ctx.accounts.vault.withdrawing == true, "You do not have an active withdraw ticket");
+pub fn claim_donation(ctx: Context<ClaimDonation>) -> Result<()> {
+    assert!(ctx.accounts.vault.withdrawing == false, "Vault owner is currently withdrawing, please try again later");
     let cpi_ctx = ctx.accounts.into_marinade_claim_cpi_ctx();
     cpi::claim(cpi_ctx)?;
 
     let empty_acc_rent = ctx.accounts.rent.minimum_balance(0);
-    let deposited = ctx.accounts.vault.deposited;
     let sol_vault_bal = ctx.accounts.sol_vault.lamports() - empty_acc_rent;
 
-    // If the profit is negative due to slashing, just give all to depositer,
-    // if profit is made, donate the excess
-    let withdrawal_amount = if deposited >= sol_vault_bal {
-        sol_vault_bal
-    } else {
-        deposited
-    };
+    let donation_amount = sol_vault_bal * 995 / 1000;
+    let bounty_amount = sol_vault_bal - donation_amount;
 
-    let donation_amount = sol_vault_bal - withdrawal_amount;
-
-    // Withdrawal
+    // Bounty
     let transfer_ix = system_instruction::transfer(
         ctx.accounts.sol_vault.key, 
         ctx.accounts.authority.key, 
-        withdrawal_amount,
+        bounty_amount,
     );
 
     anchor_lang::solana_program::program::invoke(
@@ -53,20 +45,18 @@ pub fn claim_withdrawal(ctx: Context<ClaimWithdrawal>) -> Result<()> {
             ctx.accounts.global_sol_vault.clone()
         ]
     )?;
-
-    ctx.accounts.vault.deposited = 0;
-    ctx.accounts.vault.withdrawing = false;
     
     Ok(())
 }
 
 #[derive(Accounts)]
-pub struct ClaimWithdrawal<'info> {
+pub struct ClaimDonation<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
+    pub vault_owner: AccountInfo<'info>,
     #[account(
         mut, 
-        seeds=[b"vault", authority.key().as_ref()], 
+        seeds=[b"vault", vault_owner.key().as_ref()], 
         bump = vault.bump
     )]
     pub vault: Account<'info, Vault>,
@@ -86,7 +76,7 @@ pub struct ClaimWithdrawal<'info> {
     pub ticket_account: AccountInfo<'info>,
     #[account(
         mut,
-        seeds = [b"sol_vault", authority.key().as_ref()],
+        seeds = [b"sol_vault", vault_owner.key().as_ref()],
         bump
     )]
     pub sol_vault: AccountInfo<'info>,
@@ -98,7 +88,7 @@ pub struct ClaimWithdrawal<'info> {
 }
 
 
-impl<'info> ClaimWithdrawal<'info> {
+impl<'info> ClaimDonation<'info> {
     pub fn into_marinade_claim_cpi_ctx(
         &self,
     ) -> CpiContext<'_, '_, '_, 'info, cpi::accounts::Claim<'info>> {

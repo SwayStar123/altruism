@@ -1,39 +1,44 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, Mint, Burn, TokenAccount};
 
-use crate::instructions::{create_token_account::Vault, initialize::State};
+use crate::{instructions::{create_token_account::Vault, initialize}, state::msol_state::MsolState};
 
 use marinade_0_24_2::cpi;
 
+pub fn unstake_donation(ctx: Context<UnstakeDonation>) -> Result<()> {
+    assert!(ctx.accounts.vault.withdrawing == false, "User is in the process of withdrawing");
+    let deposited = ctx.accounts.vault.deposited;
+    let msol_amount = ctx.accounts.burn_msol_from.amount;
 
+    assert!(msol_amount > 0, "Vault has 0 msol left");
 
-pub fn order_unstake(ctx: Context<OrderUnstake>) -> Result<()> {
-    let amount = ctx.accounts.burn_msol_from.amount;
+    let lamps_from_msol = ctx.accounts.m_state.calc_lamports_from_msol_amount(msol_amount);
+    let excess_sol = lamps_from_msol - deposited;
+    let excess_msol = ctx.accounts.m_state.calc_msol_from_lamports(excess_sol);
+    
 
     let cpi_ctx = ctx.accounts.into_marinade_order_unstake_cpi_ctx();
-    cpi::order_unstake(cpi_ctx, amount)?;
-    token::burn(ctx.accounts.into_spl_token_cpi_ctx(), amount)?;
+    cpi::order_unstake(cpi_ctx, excess_msol)?;
+    token::burn(ctx.accounts.into_spl_token_cpi_ctx(), excess_msol)?;
 
-    ctx.accounts.vault.withdrawing = true;
     Ok(())
 }
 
 #[derive(Accounts)]
-pub struct OrderUnstake<'info> {
-    pub state: Account<'info, State>,
+pub struct UnstakeDonation<'info> {
+    pub state: Account<'info, initialize::State>,
     #[account(mut, has_one = mint)]
     pub token: Account<'info, TokenAccount>,
     #[account(mut, address = state.alt_sol_mint_pubkey)]
     pub mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub authority: Signer<'info>,
+    pub vault_owner: AccountInfo<'info>,
     pub token_program: Program<'info, Token>,
-    #[account(mut, seeds=[b"vault", authority.key().as_ref()], bump = vault.bump)]
+    #[account(mut, seeds=[b"vault", vault_owner.key().as_ref()], bump = vault.bump)]
     pub vault: Account<'info, Vault>,
 
     
     #[account(mut)]
-    pub m_state: AccountInfo<'info>,
+    pub m_state: Account<'info, marinade_0_24_2::State>,
     #[account(mut)]
     pub msol_mint: AccountInfo<'info>,
     // Note: Ticket beneficiary is burn_msol_from.owner
@@ -54,7 +59,7 @@ pub struct OrderUnstake<'info> {
 }
 
 
-impl<'info> OrderUnstake<'info> {
+impl<'info> UnstakeDonation<'info> {
     pub fn into_spl_token_cpi_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Burn<'info>> {
         CpiContext::new(
             self.token_program.to_account_info(),
@@ -70,7 +75,7 @@ impl<'info> OrderUnstake<'info> {
         &self,
     ) -> CpiContext<'_, '_, '_, 'info, cpi::accounts::OrderUnstake<'info>> {
         let cpi_accounts = cpi::accounts::OrderUnstake {
-            state: self.m_state.clone(),
+            state: self.m_state.to_account_info(),
             msol_mint: self.msol_mint.clone(),
             burn_msol_from: self.burn_msol_from.to_account_info(),
             burn_msol_authority: self.vault.to_account_info(),
