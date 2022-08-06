@@ -1,25 +1,9 @@
-use anchor_lang::{prelude::*, solana_program::system_instruction};
+use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, Mint, TokenAccount};
 
-pub fn create_token_account(ctx: Context<CreateTokenAccount>) -> Result<()> {
-    let vault = &mut ctx.accounts.vault;
-    vault.bump = *ctx.bumps.get("vault").unwrap();
+use crate::state::beneficiary::Beneficiary;
 
-    let sol_vault_rent_exemption_amt = ctx.accounts.rent.minimum_balance(0);
-    let transfer_ix = system_instruction::transfer(
-        ctx.accounts.authority.key,
-        ctx.accounts.sol_vault.key, 
-        sol_vault_rent_exemption_amt);
-
-    anchor_lang::solana_program::program::invoke(
-        &transfer_ix,
-        &[
-            //from
-            ctx.accounts.authority.to_account_info(),
-            //to
-            ctx.accounts.sol_vault.to_account_info()
-        ]
-    )?;
+pub fn create_token_account(_ctx: Context<CreateTokenAccount>) -> Result<()> {
     Ok(())
 }
 
@@ -36,28 +20,14 @@ pub struct CreateTokenAccount<'info> {
     #[account(
         init,
         payer = authority,
-        space = 10 + 8,
-        seeds = [b"vault", authority.key().as_ref()],
-        bump
-    )]
-    pub vault: Account<'info, Vault>,
-    #[account(
-        seeds = [b"sol_vault", authority.key().as_ref()],
+        seeds = [b"beneficiary", authority.key().as_ref()],
         bump,
+        space = 8 + 8
     )]
-    pub sol_vault: AccountInfo<'info>,
+    pub beneficiary: Account<'info, Beneficiary>,
     #[account(mut)]
     pub authority: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
-}
-
-// 1 + 8 + 1
-#[account]
-pub struct Vault {
-    // used to keep track of whether or not the user is withdrawing their funds ATM
-    pub withdrawing: bool, // 1
-    pub deposited: u64, // 8
-    pub bump: u8, // 1
 }

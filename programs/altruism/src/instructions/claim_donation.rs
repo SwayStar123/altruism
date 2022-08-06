@@ -1,24 +1,23 @@
 use anchor_lang::{prelude::*, solana_program::system_instruction};
 
-use crate::instructions::create_token_account::Vault;
+use crate::state::beneficiary::Beneficiary;
 
 use marinade_0_24_2::cpi;
 
 
 pub fn claim_donation(ctx: Context<ClaimDonation>) -> Result<()> {
-    assert!(ctx.accounts.vault.withdrawing == false, "Vault owner is currently withdrawing, please try again later");
+
     let cpi_ctx = ctx.accounts.into_marinade_claim_cpi_ctx();
     cpi::claim(cpi_ctx)?;
 
-    let empty_acc_rent = ctx.accounts.rent.minimum_balance(0);
-    let sol_vault_bal = ctx.accounts.sol_vault.lamports() - empty_acc_rent;
+    let beneficiary_amount = ctx.accounts.beneficiary.sol_amount;
 
-    let donation_amount = sol_vault_bal * 995 / 1000;
-    let bounty_amount = sol_vault_bal - donation_amount;
+    let donation_amount = beneficiary_amount * 995 / 1000;
+    let bounty_amount = beneficiary_amount - donation_amount;
 
     // Bounty
     let transfer_ix = system_instruction::transfer(
-        ctx.accounts.sol_vault.key, 
+        ctx.accounts.vault.key, 
         ctx.accounts.authority.key, 
         bounty_amount,
     );
@@ -26,14 +25,14 @@ pub fn claim_donation(ctx: Context<ClaimDonation>) -> Result<()> {
     anchor_lang::solana_program::program::invoke(
         &transfer_ix,
         &[
-            ctx.accounts.sol_vault.clone(),
+            ctx.accounts.vault.clone(),
             ctx.accounts.authority.to_account_info()
         ]
     )?;
 
     // Donation
     let transfer_ix = system_instruction::transfer(
-        ctx.accounts.sol_vault.key, 
+        ctx.accounts.vault.key, 
         ctx.accounts.global_sol_vault.key, 
         donation_amount
     );
@@ -41,7 +40,7 @@ pub fn claim_donation(ctx: Context<ClaimDonation>) -> Result<()> {
     anchor_lang::solana_program::program::invoke(
         &transfer_ix,
         &[
-            ctx.accounts.sol_vault.clone(),
+            ctx.accounts.vault.clone(),
             ctx.accounts.global_sol_vault.clone()
         ]
     )?;
@@ -56,15 +55,21 @@ pub struct ClaimDonation<'info> {
     pub vault_owner: AccountInfo<'info>,
     #[account(
         mut, 
-        seeds=[b"vault", vault_owner.key().as_ref()], 
-        bump = vault.bump
+        seeds=[b"msol_vault"], 
+        bump
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: AccountInfo<'info>,
     #[account(
         seeds = [b"global_sol_vault"],
         bump
     )]
     pub global_sol_vault: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [b"beneficiary"],
+        bump,
+    )]
+    pub beneficiary: Account<'info, Beneficiary>,
     pub rent: Sysvar<'info, Rent>,
 
     
@@ -74,12 +79,7 @@ pub struct ClaimDonation<'info> {
     pub reserve_pda: AccountInfo<'info>,
     #[account(mut)]
     pub ticket_account: AccountInfo<'info>,
-    #[account(
-        mut,
-        seeds = [b"sol_vault", vault_owner.key().as_ref()],
-        bump
-    )]
-    pub sol_vault: AccountInfo<'info>,
+
     
     pub clock: Sysvar<'info, Clock>,
     pub system_program: Program<'info, System>,
@@ -96,7 +96,7 @@ impl<'info> ClaimDonation<'info> {
             state: self.m_state.clone(),
             reserve_pda: self.reserve_pda.clone(),
             ticket_account: self.ticket_account.clone(),
-            transfer_sol_to: self.sol_vault.clone(),
+            transfer_sol_to: self.vault.clone(),
             clock: self.clock.to_account_info(),
             system_program: self.system_program.to_account_info(),
            

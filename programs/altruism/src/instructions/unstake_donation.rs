@@ -1,25 +1,25 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, Mint, Burn, TokenAccount};
+use anchor_spl::token::{Token, Mint, TokenAccount};
 
-use crate::{instructions::{create_token_account::Vault, initialize}, state::msol_state::MsolState};
+use crate::state::{beneficiary::Beneficiary, msol_state::MsolState};
+use crate::instructions::initialize;
 
 use marinade_0_24_2::cpi;
 
 pub fn unstake_donation(ctx: Context<UnstakeDonation>) -> Result<()> {
-    assert!(ctx.accounts.vault.withdrawing == false, "User is in the process of withdrawing");
-    let deposited = ctx.accounts.vault.deposited;
-    let msol_amount = ctx.accounts.burn_msol_from.amount;
+    let total_msol = ctx.accounts.burn_msol_from.amount;
+    let total_altsol = ctx.accounts.mint.supply;
+    let current_price = ctx.accounts.m_state.calc_lamports_from_msol_amount(total_msol) as f64 / total_altsol as f64;
 
-    assert!(msol_amount > 0, "Vault has 0 msol left");
+    assert!(1.0 < current_price);
+    let price_diff = 1.0 - current_price;
 
-    let lamps_from_msol = ctx.accounts.m_state.calc_lamports_from_msol_amount(msol_amount);
-    let excess_sol = lamps_from_msol - deposited;
-    let excess_msol = ctx.accounts.m_state.calc_msol_from_lamports(excess_sol);
-    
+    let excess_msol = (price_diff * total_msol as f64) as u64;
+
+    ctx.accounts.beneficiary.sol_amount += ctx.accounts.m_state.calc_lamports_from_msol_amount(excess_msol);
 
     let cpi_ctx = ctx.accounts.into_marinade_order_unstake_cpi_ctx();
     cpi::order_unstake(cpi_ctx, excess_msol)?;
-    token::burn(ctx.accounts.into_spl_token_cpi_ctx(), excess_msol)?;
 
     Ok(())
 }
@@ -31,10 +31,15 @@ pub struct UnstakeDonation<'info> {
     pub token: Account<'info, TokenAccount>,
     #[account(mut, address = state.alt_sol_mint_pubkey)]
     pub mint: Account<'info, Mint>,
-    pub vault_owner: AccountInfo<'info>,
     pub token_program: Program<'info, Token>,
-    #[account(mut, seeds=[b"vault", vault_owner.key().as_ref()], bump = vault.bump)]
-    pub vault: Account<'info, Vault>,
+    #[account(mut, seeds=[b"msol_vault"], bump)]
+    pub vault: AccountInfo<'info>,
+    #[account(
+        mut,
+        seeds = [b"beneficiary"],
+        bump,
+    )]
+    pub beneficiary: Account<'info, Beneficiary>,
 
     
     #[account(mut)]
@@ -60,16 +65,6 @@ pub struct UnstakeDonation<'info> {
 
 
 impl<'info> UnstakeDonation<'info> {
-    pub fn into_spl_token_cpi_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Burn<'info>> {
-        CpiContext::new(
-            self.token_program.to_account_info(),
-            Burn { 
-                mint: self.mint.to_account_info(),
-                from: self.token.to_account_info(),
-                authority: self.vault.to_account_info(),
-             }
-        )
-    }
 
     pub fn into_marinade_order_unstake_cpi_ctx(
         &self,

@@ -1,14 +1,18 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, Mint};
+use anchor_spl::token::{Token, Mint, TokenAccount};
+
+use crate::state::beneficiary::Beneficiary;
 
 pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
     ctx.accounts.state.alt_sol_mint_pubkey = ctx.accounts.mint.key();
 
-    let global_sol_vault_rent_exemption_amt = ctx.accounts.rent.minimum_balance(0);
+    let empty_acc_rent = ctx.accounts.rent.minimum_balance(0);
+
+
     let transfer_ix = anchor_lang::solana_program::system_instruction::transfer(
         ctx.accounts.payer.key,
         ctx.accounts.global_sol_vault.key, 
-        global_sol_vault_rent_exemption_amt);
+        empty_acc_rent);
 
     anchor_lang::solana_program::program::invoke(
         &transfer_ix,
@@ -17,6 +21,21 @@ pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
             ctx.accounts.payer.to_account_info(),
             //to
             ctx.accounts.global_sol_vault.to_account_info()
+        ]
+    )?;
+
+    let transfer_ix = anchor_lang::solana_program::system_instruction::transfer(
+        ctx.accounts.payer.key,
+        ctx.accounts.vault.key, 
+        empty_acc_rent);
+
+    anchor_lang::solana_program::program::invoke(
+        &transfer_ix,
+        &[
+            //from
+            ctx.accounts.payer.to_account_info(),
+            //to
+            ctx.accounts.vault.to_account_info()
         ]
     )?;
     Ok(())
@@ -36,7 +55,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         payer = payer,
-        space = 32 + 8,
+        space = 48 + 8,
     )]
     pub state: Account<'info, State>,
     #[account(
@@ -44,6 +63,27 @@ pub struct Initialize<'info> {
         bump
     )]
     pub global_sol_vault: AccountInfo<'info>,
+    #[account(mut, seeds=[b"msol_vault"], bump)]
+    pub vault: AccountInfo<'info>,
+    #[account(mut)]
+    pub m_state: Account<'info, marinade_0_24_2::State>,
+    #[account(mut, address = m_state.msol_mint)]
+    pub msol_mint: AccountInfo<'info>,
+    #[account(
+        init,
+        payer = payer,
+        token::mint = msol_mint,
+        token::authority = vault
+    )]
+    pub msol_token_account: Account<'info, TokenAccount>,
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + 8,
+        seeds = [b"beneficiary"],
+        bump,
+    )]
+    pub beneficiary: Account<'info, Beneficiary>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
@@ -53,4 +93,6 @@ pub struct Initialize<'info> {
 #[account]
 pub struct State {
     pub alt_sol_mint_pubkey: Pubkey, // 32
+    pub total_deposited: u64, // 8
+    pub avg_entry_price: f64, // 8
 }

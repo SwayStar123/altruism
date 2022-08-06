@@ -1,28 +1,15 @@
 use anchor_lang::{prelude::*, solana_program::system_instruction};
 
-use crate::instructions::create_token_account::Vault;
+use crate::state::beneficiary::Beneficiary;
 
 use marinade_0_24_2::cpi;
 
 
 pub fn claim_withdrawal(ctx: Context<ClaimWithdrawal>) -> Result<()> {
-    assert!(ctx.accounts.vault.withdrawing == true, "You do not have an active withdraw ticket");
     let cpi_ctx = ctx.accounts.into_marinade_claim_cpi_ctx();
     cpi::claim(cpi_ctx)?;
 
-    let empty_acc_rent = ctx.accounts.rent.minimum_balance(0);
-    let deposited = ctx.accounts.vault.deposited;
-    let sol_vault_bal = ctx.accounts.sol_vault.lamports() - empty_acc_rent;
-
-    // If the profit is negative due to slashing, just give all to depositer,
-    // if profit is made, donate the excess
-    let withdrawal_amount = if deposited >= sol_vault_bal {
-        sol_vault_bal
-    } else {
-        deposited
-    };
-
-    let donation_amount = sol_vault_bal - withdrawal_amount;
+    let withdrawal_amount = ctx.accounts.beneficiary.sol_amount;
 
     // Withdrawal
     let transfer_ix = system_instruction::transfer(
@@ -39,23 +26,7 @@ pub fn claim_withdrawal(ctx: Context<ClaimWithdrawal>) -> Result<()> {
         ]
     )?;
 
-    // Donation
-    let transfer_ix = system_instruction::transfer(
-        ctx.accounts.sol_vault.key, 
-        ctx.accounts.global_sol_vault.key, 
-        donation_amount
-    );
-
-    anchor_lang::solana_program::program::invoke(
-        &transfer_ix,
-        &[
-            ctx.accounts.sol_vault.clone(),
-            ctx.accounts.global_sol_vault.clone()
-        ]
-    )?;
-
-    ctx.accounts.vault.deposited = 0;
-    ctx.accounts.vault.withdrawing = false;
+    ctx.accounts.beneficiary.sol_amount = 0;
     
     Ok(())
 }
@@ -66,15 +37,21 @@ pub struct ClaimWithdrawal<'info> {
     pub authority: Signer<'info>,
     #[account(
         mut, 
-        seeds=[b"vault", authority.key().as_ref()], 
-        bump = vault.bump
+        seeds=[b"msol_vault"], 
+        bump
     )]
-    pub vault: Account<'info, Vault>,
+    pub vault: AccountInfo<'info>,
     #[account(
         seeds = [b"global_sol_vault"],
         bump
     )]
     pub global_sol_vault: AccountInfo<'info>,
+    #[account(
+        mut, 
+        seeds = [b"beneficiary", authority.key().as_ref()],
+        bump, 
+    )]
+    pub beneficiary: Account<'info, Beneficiary>,
     pub rent: Sysvar<'info, Rent>,
 
     

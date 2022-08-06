@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, Mint, MintTo, TokenAccount};
 
-use crate::instructions::{create_token_account::Vault, initialize::State};
+use crate::instructions::initialize::State;
 
 use marinade_0_24_2::cpi;
 
@@ -12,6 +12,8 @@ pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
     cpi::deposit(cpi_ctx, amount)?;
     token::mint_to(ctx.accounts.into_spl_token_cpi_ctx(), amount)?;
 
+    ctx.accounts.state.total_deposited += amount;
+    ctx.accounts.state.avg_entry_price = ctx.accounts.state.total_deposited as f64 / ctx.accounts.mint_to.amount as f64 ;
     Ok(())
 }
 
@@ -25,13 +27,13 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     pub token_program: Program<'info, Token>,
-    #[account(mut, seeds=[b"vault", authority.key().as_ref()], bump = vault.bump)]
-    pub vault: Account<'info, Vault>,
+    #[account(mut, seeds=[b"msol_vault"], bump)]
+    pub vault: AccountInfo<'info>,
 
     // this part is equivalent to marinade-finance deposit instructions
     #[account(mut)]
-    pub marinade_state: AccountInfo<'info>, // marinade state
-    #[account(mut)]
+    pub marinade_state: Account<'info, marinade_0_24_2::State>, // marinade state
+    #[account(mut, address = marinade_state.msol_mint)]
     pub msol_mint: Account<'info, Mint>,
     #[account(mut)]
     pub liq_pool_sol_leg_pda: AccountInfo<'info>,
@@ -41,8 +43,6 @@ pub struct Deposit<'info> {
     #[account(mut)]
     pub reserve_pda: AccountInfo<'info>,
     #[account(
-        init,
-        payer = authority,
         token::mint = msol_mint,
         token::authority = vault,
     )]
@@ -73,7 +73,7 @@ impl<'info> Deposit<'info> {
         &self,
     ) -> CpiContext<'_, '_, '_, 'info, cpi::accounts::Deposit<'info>> {
         let cpi_accounts = cpi::accounts::Deposit {
-            state: self.marinade_state.clone(),
+            state: self.marinade_state.to_account_info(),
             msol_mint: self.msol_mint.to_account_info(),
             liq_pool_sol_leg_pda: self.liq_pool_sol_leg_pda.clone(),
             liq_pool_msol_leg: self.liq_pool_msol_leg.clone(),

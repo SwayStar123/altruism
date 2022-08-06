@@ -26,8 +26,8 @@ pub mod altruism {
     }
 
     // orders a delayed unstake of the mSOL and consecuticely the altSOL
-    pub fn order_unstake(ctx: Context<OrderUnstake>) -> Result<()> {
-        instructions::order_unstake::order_unstake(ctx)
+    pub fn order_unstake(ctx: Context<OrderUnstake>, amount: u64) -> Result<()> {
+        instructions::order_unstake::order_unstake(ctx, amount)
     }
 
     // claims the delayed unstake ticket

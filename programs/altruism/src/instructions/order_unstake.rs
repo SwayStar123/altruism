@@ -1,20 +1,23 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, Mint, Burn, TokenAccount};
 
-use crate::instructions::{create_token_account::Vault, initialize::State};
+use crate::instructions::initialize::State;
+use crate::state::beneficiary::Beneficiary;
+use crate::state::msol_state::MsolState;
 
 use marinade_0_24_2::cpi;
 
-
-
-pub fn order_unstake(ctx: Context<OrderUnstake>) -> Result<()> {
-    let amount = ctx.accounts.burn_msol_from.amount;
+pub fn order_unstake(ctx: Context<OrderUnstake>, unstake_amount: u64) -> Result<()> {
+    let share_of_msol = (unstake_amount as f64 * ctx.accounts.state.avg_entry_price) as u64;
 
     let cpi_ctx = ctx.accounts.into_marinade_order_unstake_cpi_ctx();
-    cpi::order_unstake(cpi_ctx, amount)?;
-    token::burn(ctx.accounts.into_spl_token_cpi_ctx(), amount)?;
+    cpi::order_unstake(cpi_ctx, share_of_msol)?;
+    token::burn(ctx.accounts.into_spl_token_cpi_ctx(), unstake_amount)?;
 
-    ctx.accounts.vault.withdrawing = true;
+    let lamps =  ctx.accounts.m_state.calc_lamports_from_msol_amount(share_of_msol);
+
+    ctx.accounts.beneficiary.sol_amount += lamps;
+
     Ok(())
 }
 
@@ -28,13 +31,15 @@ pub struct OrderUnstake<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     pub token_program: Program<'info, Token>,
-    #[account(mut, seeds=[b"vault", authority.key().as_ref()], bump = vault.bump)]
-    pub vault: Account<'info, Vault>,
+    #[account(mut, seeds=[b"vault"], bump)]
+    pub vault: AccountInfo<'info>,
+    #[account(mut, seeds=[b"beneficiary", authority.key().as_ref()], bump)]
+    pub beneficiary: Account<'info, Beneficiary>,
 
     
     #[account(mut)]
-    pub m_state: AccountInfo<'info>,
-    #[account(mut)]
+    pub m_state: Account<'info, marinade_0_24_2::State>,
+    #[account(mut, address = m_state.msol_mint)]
     pub msol_mint: AccountInfo<'info>,
     // Note: Ticket beneficiary is burn_msol_from.owner
     #[account(
@@ -70,7 +75,7 @@ impl<'info> OrderUnstake<'info> {
         &self,
     ) -> CpiContext<'_, '_, '_, 'info, cpi::accounts::OrderUnstake<'info>> {
         let cpi_accounts = cpi::accounts::OrderUnstake {
-            state: self.m_state.clone(),
+            state: self.m_state.to_account_info(),
             msol_mint: self.msol_mint.clone(),
             burn_msol_from: self.burn_msol_from.to_account_info(),
             burn_msol_authority: self.vault.to_account_info(),
