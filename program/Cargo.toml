@@ -1,0 +1,25 @@
+[package]
+name = "altruism_finance"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+authors = ["Sway <swayambhanded@gmail.com>"]
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "altruism_finance"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[profile.release]
+overflow-checks = true
+
+[dependencies]
+anchor-lang = "0.24.2"
+anchor-spl = "0.24.2"
+marinade-0_24_2 = { git = "https://github.com/SwayStar123/marinade-0_24_2" }

@@ -1,0 +1,17 @@
+[features]
+seeds = false
+[programs.localnet]
+altruism_finance = "A1tru1e86JujDZ1jP2yaoCHegVj8SvMzSP2yhRFDQgTR"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[workspace]
+members = [
+    "."
+]
+
