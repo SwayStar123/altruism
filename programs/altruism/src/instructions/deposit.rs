@@ -19,11 +19,11 @@ pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
-    pub state: Account<'info, State>,
+    pub state: Box<Account<'info, State>>,
     #[account(mut, has_one = mint)]
-    pub token: Account<'info, TokenAccount>,
+    pub token: Box<Account<'info, TokenAccount>>,
     #[account(mut, address = state.alt_sol_mint_pubkey)]
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
     #[account(mut)]
     pub authority: Signer<'info>,
     pub token_program: Program<'info, Token>,
@@ -32,9 +32,9 @@ pub struct Deposit<'info> {
 
     // this part is equivalent to marinade-finance deposit instructions
     #[account(mut)]
-    pub marinade_state: Account<'info, marinade_0_24_2::State>, // marinade state
+    pub marinade_state: Box<Account<'info, marinade_0_24_2::State>>, // marinade state
     #[account(mut, address = marinade_state.msol_mint)]
-    pub msol_mint: Account<'info, Mint>,
+    pub msol_mint: Box<Account<'info, Mint>>,
     #[account(mut)]
     pub liq_pool_sol_leg_pda: AccountInfo<'info>,
     #[account(mut)]
@@ -46,14 +46,14 @@ pub struct Deposit<'info> {
         token::mint = msol_mint,
         token::authority = vault,
     )]
-    pub mint_to: Account<'info, TokenAccount>,
+    pub mint_to: Box<Account<'info, TokenAccount>>,
     pub msol_mint_authority: AccountInfo<'info>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: AccountInfo<'info>,
     
 
     #[account(address = marinade_0_24_2::ID)]
-    pub marinade_finance_program: AccountInfo<'info>
+    pub marinade_finance_program: AccountInfo<'info>,
 }
 
 

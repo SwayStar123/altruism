@@ -23,22 +23,22 @@ pub fn order_unstake(ctx: Context<OrderUnstake>, unstake_amount: u64) -> Result<
 
 #[derive(Accounts)]
 pub struct OrderUnstake<'info> {
-    pub state: Account<'info, State>,
+    pub state: Box<Account<'info, State>>,
     #[account(mut, has_one = mint)]
-    pub token: Account<'info, TokenAccount>,
+    pub token: Box<Account<'info, TokenAccount>>,
     #[account(mut, address = state.alt_sol_mint_pubkey)]
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
     #[account(mut)]
     pub authority: Signer<'info>,
     pub token_program: Program<'info, Token>,
     #[account(mut, seeds=[b"vault"], bump)]
     pub vault: AccountInfo<'info>,
     #[account(mut, seeds=[b"beneficiary", authority.key().as_ref()], bump)]
-    pub beneficiary: Account<'info, Beneficiary>,
+    pub beneficiary: Box<Account<'info, Beneficiary>>,
 
     
     #[account(mut)]
-    pub m_state: Account<'info, marinade_0_24_2::State>,
+    pub m_state: Box<Account<'info, marinade_0_24_2::State>>,
     #[account(mut, address = m_state.msol_mint)]
     pub msol_mint: AccountInfo<'info>,
     // Note: Ticket beneficiary is burn_msol_from.owner
@@ -47,7 +47,7 @@ pub struct OrderUnstake<'info> {
         token::mint = msol_mint,
         token::authority = vault
     )]
-    pub burn_msol_from: Account<'info, TokenAccount>,
+    pub burn_msol_from: Box<Account<'info, TokenAccount>>,
     // #[account(signer)]      I think the Vault PDA is required here
     // pub burn_msol_authority: AccountInfo<'info>, // burn_msol_from acc must be pre-delegated with enough amount to this key or input owner signature here
     #[account(zero, rent_exempt = enforce)]

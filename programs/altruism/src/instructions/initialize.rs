@@ -49,7 +49,7 @@ pub struct Initialize<'info> {
         mint::decimals = 9,
         mint::authority = payer,
     )]
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(
@@ -57,7 +57,7 @@ pub struct Initialize<'info> {
         payer = payer,
         space = 48 + 8,
     )]
-    pub state: Account<'info, State>,
+    pub state: Box<Account<'info, State>>,
     #[account(
         seeds = [b"global_sol_vault"],
         bump
@@ -66,7 +66,7 @@ pub struct Initialize<'info> {
     #[account(mut, seeds=[b"msol_vault"], bump)]
     pub vault: AccountInfo<'info>,
     #[account(mut)]
-    pub m_state: Account<'info, marinade_0_24_2::State>,
+    pub m_state: Box<Account<'info, marinade_0_24_2::State>>,
     #[account(mut, address = m_state.msol_mint)]
     pub msol_mint: AccountInfo<'info>,
     #[account(
@@ -75,7 +75,7 @@ pub struct Initialize<'info> {
         token::mint = msol_mint,
         token::authority = vault
     )]
-    pub msol_token_account: Account<'info, TokenAccount>,
+    pub msol_token_account: Box<Account<'info, TokenAccount>>,
     #[account(
         init,
         payer = payer,
@@ -83,7 +83,7 @@ pub struct Initialize<'info> {
         seeds = [b"beneficiary"],
         bump,
     )]
-    pub beneficiary: Account<'info, Beneficiary>,
+    pub beneficiary: Box<Account<'info, Beneficiary>>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
