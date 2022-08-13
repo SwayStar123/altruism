@@ -4,9 +4,7 @@ use crate::state::beneficiary::Beneficiary;
 
 use marinade_0_24_2::cpi;
 
-
 pub fn claim_donation(ctx: Context<ClaimDonation>) -> Result<()> {
-
     let cpi_ctx = ctx.accounts.into_marinade_claim_cpi_ctx();
     cpi::claim(cpi_ctx)?;
 
@@ -17,8 +15,8 @@ pub fn claim_donation(ctx: Context<ClaimDonation>) -> Result<()> {
 
     // Bounty
     let transfer_ix = system_instruction::transfer(
-        ctx.accounts.vault.key, 
-        ctx.accounts.authority.key, 
+        ctx.accounts.vault.key,
+        ctx.accounts.authority.key,
         bounty_amount,
     );
 
@@ -26,25 +24,25 @@ pub fn claim_donation(ctx: Context<ClaimDonation>) -> Result<()> {
         &transfer_ix,
         &[
             ctx.accounts.vault.clone(),
-            ctx.accounts.authority.to_account_info()
-        ]
+            ctx.accounts.authority.to_account_info(),
+        ],
     )?;
 
     // Donation
     let transfer_ix = system_instruction::transfer(
-        ctx.accounts.vault.key, 
-        ctx.accounts.global_sol_vault.key, 
-        donation_amount
+        ctx.accounts.vault.key,
+        ctx.accounts.global_sol_vault.key,
+        donation_amount,
     );
 
     anchor_lang::solana_program::program::invoke(
         &transfer_ix,
         &[
             ctx.accounts.vault.clone(),
-            ctx.accounts.global_sol_vault.clone()
-        ]
+            ctx.accounts.global_sol_vault.clone(),
+        ],
     )?;
-    
+
     Ok(())
 }
 
@@ -54,7 +52,7 @@ pub struct ClaimDonation<'info> {
     pub authority: Signer<'info>,
     pub vault_owner: AccountInfo<'info>,
     #[account(
-        mut, 
+        mut,
         seeds=[b"msol_vault"], 
         bump
     )]
@@ -72,7 +70,6 @@ pub struct ClaimDonation<'info> {
     pub beneficiary: Account<'info, Beneficiary>,
     pub rent: Sysvar<'info, Rent>,
 
-    
     #[account(mut)]
     pub m_state: AccountInfo<'info>,
     #[account(mut)]
@@ -80,13 +77,11 @@ pub struct ClaimDonation<'info> {
     #[account(mut)]
     pub ticket_account: AccountInfo<'info>,
 
-    
     pub clock: Sysvar<'info, Clock>,
     pub system_program: Program<'info, System>,
     #[account(address = marinade_0_24_2::ID)]
-    pub marinade_finance_program: AccountInfo<'info>
+    pub marinade_finance_program: AccountInfo<'info>,
 }
-
 
 impl<'info> ClaimDonation<'info> {
     pub fn into_marinade_claim_cpi_ctx(
@@ -99,7 +94,6 @@ impl<'info> ClaimDonation<'info> {
             transfer_sol_to: self.vault.clone(),
             clock: self.clock.to_account_info(),
             system_program: self.system_program.to_account_info(),
-           
         };
 
         CpiContext::new(self.marinade_finance_program.clone(), cpi_accounts)

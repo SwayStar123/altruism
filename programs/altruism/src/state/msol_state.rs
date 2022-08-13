@@ -53,23 +53,16 @@ pub fn proportional(amount: u64, numerator: u64, denominator: u64) -> u64 {
     if denominator == 0 {
         return amount;
     }
-    u64::try_from((amount as u128) * (numerator as u128) / (denominator as u128)).expect("value_from_shares calc failed")
+    u64::try_from((amount as u128) * (numerator as u128) / (denominator as u128))
+        .expect("value_from_shares calc failed")
 }
 
 #[inline] //alias for proportional
-pub fn value_from_shares(
-    shares: u64,
-    total_value: u64,
-    total_shares: u64,
-) -> u64 {
+pub fn value_from_shares(shares: u64, total_value: u64, total_shares: u64) -> u64 {
     proportional(shares, total_value, total_shares)
 }
 
-pub fn shares_from_value(
-    value: u64,
-    total_value: u64,
-    total_shares: u64,
-) -> u64 {
+pub fn shares_from_value(value: u64, total_value: u64, total_shares: u64) -> u64 {
     if total_shares == 0 {
         //no shares minted yet / First mint
         value

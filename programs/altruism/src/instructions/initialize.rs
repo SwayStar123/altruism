@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Token, Mint, TokenAccount};
+use anchor_spl::token::{Mint, Token, TokenAccount};
 
 use crate::state::beneficiary::Beneficiary;
 
@@ -8,11 +8,11 @@ pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
 
     let empty_acc_rent = ctx.accounts.rent.minimum_balance(0);
 
-
     let transfer_ix = anchor_lang::solana_program::system_instruction::transfer(
         ctx.accounts.payer.key,
-        ctx.accounts.global_sol_vault.key, 
-        empty_acc_rent);
+        ctx.accounts.global_sol_vault.key,
+        empty_acc_rent,
+    );
 
     anchor_lang::solana_program::program::invoke(
         &transfer_ix,
@@ -20,14 +20,15 @@ pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
             //from
             ctx.accounts.payer.to_account_info(),
             //to
-            ctx.accounts.global_sol_vault.to_account_info()
-        ]
+            ctx.accounts.global_sol_vault.to_account_info(),
+        ],
     )?;
 
     let transfer_ix = anchor_lang::solana_program::system_instruction::transfer(
         ctx.accounts.payer.key,
-        ctx.accounts.vault.key, 
-        empty_acc_rent);
+        ctx.accounts.vault.key,
+        empty_acc_rent,
+    );
 
     anchor_lang::solana_program::program::invoke(
         &transfer_ix,
@@ -35,8 +36,8 @@ pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
             //from
             ctx.accounts.payer.to_account_info(),
             //to
-            ctx.accounts.vault.to_account_info()
-        ]
+            ctx.accounts.vault.to_account_info(),
+        ],
     )?;
     Ok(())
 }
@@ -93,6 +94,6 @@ pub struct Initialize<'info> {
 #[account]
 pub struct State {
     pub alt_sol_mint_pubkey: Pubkey, // 32
-    pub total_deposited: u64, // 8
-    pub avg_entry_price: f64, // 8
+    pub total_deposited: u64,        // 8
+    pub avg_entry_price: f64,        // 8
 }

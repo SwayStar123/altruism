@@ -1,19 +1,19 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, Mint, MintTo, TokenAccount};
+use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount};
 
 use crate::instructions::initialize::State;
 
 use marinade_0_24_2::cpi;
 
 pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-
     let cpi_ctx = ctx.accounts.into_marinade_deposit_cpi_ctx();
 
     cpi::deposit(cpi_ctx, amount)?;
     token::mint_to(ctx.accounts.into_spl_token_cpi_ctx(), amount)?;
 
     ctx.accounts.state.total_deposited += amount;
-    ctx.accounts.state.avg_entry_price = ctx.accounts.state.total_deposited as f64 / ctx.accounts.mint_to.amount as f64 ;
+    ctx.accounts.state.avg_entry_price =
+        ctx.accounts.state.total_deposited as f64 / ctx.accounts.mint_to.amount as f64;
     Ok(())
 }
 
@@ -50,22 +50,20 @@ pub struct Deposit<'info> {
     pub msol_mint_authority: AccountInfo<'info>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: AccountInfo<'info>,
-    
 
     #[account(address = marinade_0_24_2::ID)]
     pub marinade_finance_program: AccountInfo<'info>,
 }
 
-
 impl<'info> Deposit<'info> {
     pub fn into_spl_token_cpi_ctx(&self) -> CpiContext<'_, '_, '_, 'info, MintTo<'info>> {
         CpiContext::new(
             self.token_program.to_account_info(),
-            MintTo { 
+            MintTo {
                 mint: self.mint.to_account_info(),
                 to: self.token.to_account_info(),
                 authority: self.authority.to_account_info(),
-             }
+            },
         )
     }
 

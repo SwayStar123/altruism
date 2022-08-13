@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, Mint, Burn, TokenAccount};
+use anchor_spl::token::{self, Burn, Mint, Token, TokenAccount};
 
 use crate::instructions::initialize::State;
 use crate::state::beneficiary::Beneficiary;
@@ -14,7 +14,10 @@ pub fn order_unstake(ctx: Context<OrderUnstake>, unstake_amount: u64) -> Result<
     cpi::order_unstake(cpi_ctx, share_of_msol)?;
     token::burn(ctx.accounts.into_spl_token_cpi_ctx(), unstake_amount)?;
 
-    let lamps =  ctx.accounts.m_state.calc_lamports_from_msol_amount(share_of_msol);
+    let lamps = ctx
+        .accounts
+        .m_state
+        .calc_lamports_from_msol_amount(share_of_msol);
 
     ctx.accounts.beneficiary.sol_amount += lamps;
 
@@ -36,7 +39,6 @@ pub struct OrderUnstake<'info> {
     #[account(mut, seeds=[b"beneficiary", authority.key().as_ref()], bump)]
     pub beneficiary: Box<Account<'info, Beneficiary>>,
 
-    
     #[account(mut)]
     pub m_state: Box<Account<'info, marinade_0_24_2::State>>,
     #[account(mut, address = m_state.msol_mint)]
@@ -55,19 +57,18 @@ pub struct OrderUnstake<'info> {
     pub clock: Sysvar<'info, Clock>,
     pub rent: Sysvar<'info, Rent>,
     #[account(address = marinade_0_24_2::ID)]
-    pub marinade_finance_program: AccountInfo<'info>
+    pub marinade_finance_program: AccountInfo<'info>,
 }
-
 
 impl<'info> OrderUnstake<'info> {
     pub fn into_spl_token_cpi_ctx(&self) -> CpiContext<'_, '_, '_, 'info, Burn<'info>> {
         CpiContext::new(
             self.token_program.to_account_info(),
-            Burn { 
+            Burn {
                 mint: self.mint.to_account_info(),
                 from: self.token.to_account_info(),
                 authority: self.vault.to_account_info(),
-             }
+            },
         )
     }
 

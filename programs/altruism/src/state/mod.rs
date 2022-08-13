@@ -1,2 +1,2 @@
-pub mod msol_state;
 pub mod beneficiary;
+pub mod msol_state;

@@ -4,7 +4,6 @@ use crate::state::beneficiary::Beneficiary;
 
 use marinade_0_24_2::cpi;
 
-
 pub fn claim_withdrawal(ctx: Context<ClaimWithdrawal>) -> Result<()> {
     let cpi_ctx = ctx.accounts.into_marinade_claim_cpi_ctx();
     cpi::claim(cpi_ctx)?;
@@ -13,8 +12,8 @@ pub fn claim_withdrawal(ctx: Context<ClaimWithdrawal>) -> Result<()> {
 
     // Withdrawal
     let transfer_ix = system_instruction::transfer(
-        ctx.accounts.sol_vault.key, 
-        ctx.accounts.authority.key, 
+        ctx.accounts.sol_vault.key,
+        ctx.accounts.authority.key,
         withdrawal_amount,
     );
 
@@ -22,12 +21,12 @@ pub fn claim_withdrawal(ctx: Context<ClaimWithdrawal>) -> Result<()> {
         &transfer_ix,
         &[
             ctx.accounts.sol_vault.clone(),
-            ctx.accounts.authority.to_account_info()
-        ]
+            ctx.accounts.authority.to_account_info(),
+        ],
     )?;
 
     ctx.accounts.beneficiary.sol_amount = 0;
-    
+
     Ok(())
 }
 
@@ -36,7 +35,7 @@ pub struct ClaimWithdrawal<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
-        mut, 
+        mut,
         seeds=[b"msol_vault"], 
         bump
     )]
@@ -47,14 +46,13 @@ pub struct ClaimWithdrawal<'info> {
     )]
     pub global_sol_vault: AccountInfo<'info>,
     #[account(
-        mut, 
+        mut,
         seeds = [b"beneficiary", authority.key().as_ref()],
-        bump, 
+        bump,
     )]
     pub beneficiary: Account<'info, Beneficiary>,
     pub rent: Sysvar<'info, Rent>,
 
-    
     #[account(mut)]
     pub m_state: AccountInfo<'info>,
     #[account(mut)]
@@ -67,13 +65,12 @@ pub struct ClaimWithdrawal<'info> {
         bump
     )]
     pub sol_vault: AccountInfo<'info>,
-    
+
     pub clock: Sysvar<'info, Clock>,
     pub system_program: Program<'info, System>,
     #[account(address = marinade_0_24_2::ID)]
-    pub marinade_finance_program: AccountInfo<'info>
+    pub marinade_finance_program: AccountInfo<'info>,
 }
-
 
 impl<'info> ClaimWithdrawal<'info> {
     pub fn into_marinade_claim_cpi_ctx(
@@ -86,7 +83,6 @@ impl<'info> ClaimWithdrawal<'info> {
             transfer_sol_to: self.sol_vault.clone(),
             clock: self.clock.to_account_info(),
             system_program: self.system_program.to_account_info(),
-           
         };
 
         CpiContext::new(self.marinade_finance_program.clone(), cpi_accounts)

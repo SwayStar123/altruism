@@ -43,5 +43,5 @@ pub mod altruism {
     // allows ANYONE to claim the excess unstaked amount and donate it
     pub fn claim_donation(ctx: Context<ClaimDonation>) -> Result<()> {
         instructions::claim_donation::claim_donation(ctx)
-    }    
+    }
 }
