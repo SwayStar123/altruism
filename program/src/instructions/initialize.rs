@@ -61,6 +61,7 @@ pub struct Initialize<'info> {
     pub state: Box<Account<'info, State>>,
     /// CHECK: trust me bro
     #[account(
+        mut,
         seeds = [b"global_sol_vault"],
         bump
     )]
