@@ -4,7 +4,7 @@ pub mod state;
 use anchor_lang::prelude::*;
 use instructions::*;
 
-declare_id!("3QRDFYBJULeGi75Qon1HpDDRMuN1zqwNU9DQ1sGSSQYc");
+declare_id!("A1tru1e86JujDZ1jP2yaoCHegVj8SvMzSP2yhRFDQgTR");
 
 #[program]
 pub mod altruism {
