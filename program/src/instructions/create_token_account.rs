@@ -16,6 +16,8 @@ pub struct CreateTokenAccount<'info> {
         token::authority = authority
     )]
     pub token_account: Account<'info, TokenAccount>,
+    pub state: Account<'info, crate::initialize::State>,
+    #[account(address = state.alt_sol_mint_pubkey)]
     pub mint: Account<'info, Mint>,
     #[account(
         init,
