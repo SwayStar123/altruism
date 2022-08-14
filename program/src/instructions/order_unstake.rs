@@ -8,6 +8,8 @@ use crate::state::msol_state::MsolState;
 use marinade_0_24_2::cpi;
 
 pub fn order_unstake(ctx: Context<OrderUnstake>, unstake_amount: u64) -> Result<()> {
+    // theres some casting going over here to avoid overflows, and finally divides by 1mil because avg_entry_price is storaged as a
+    // u64 with 6 "decimal" places
     let share_of_msol = ((unstake_amount as u128 * ctx.accounts.state.avg_entry_price as u128) / 1000000) as u64;
 
     let cpi_ctx = ctx.accounts.into_marinade_order_unstake_cpi_ctx();
