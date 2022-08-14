@@ -13,7 +13,7 @@ pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
 
     ctx.accounts.state.total_deposited += amount;
     ctx.accounts.state.avg_entry_price =
-        ctx.accounts.state.total_deposited / ctx.accounts.mint_to.amount;
+        ((ctx.accounts.state.total_deposited as u128 * 1000000/ ctx.accounts.mint_to.amount as u128 * 1000000) / 1000000) as u64;
     Ok(())
 }
 
