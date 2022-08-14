@@ -51,8 +51,6 @@ pub struct ClaimDonation<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     /// CHECK: trust me bro
-    pub vault_owner: UncheckedAccount<'info>,
-    /// CHECK: trust me bro
     #[account(
         mut,
         seeds=[b"msol_vault"], 
