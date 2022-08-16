@@ -12,13 +12,16 @@ pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
     token::mint_to(ctx.accounts.into_spl_token_cpi_ctx(), amount)?;
 
     ctx.accounts.state.total_deposited += amount;
-    ctx.accounts.state.avg_entry_price =
-        ctx.accounts.state.total_deposited / ctx.accounts.mint_to.amount;
+    ctx.accounts.state.avg_entry_price = ((ctx.accounts.state.total_deposited as u128 * 1000000
+        / ctx.accounts.mint_to.amount as u128
+        * 1000000)
+        / 1000000) as u64;
     Ok(())
 }
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
+    #[account(mut)]
     pub state: Box<Account<'info, AltruismState>>,
     #[account(mut, has_one = mint)]
     pub token: Box<Account<'info, TokenAccount>>,
@@ -33,33 +36,34 @@ pub struct Deposit<'info> {
 
     // this part is equivalent to marinade-finance deposit instructions
     #[account(mut)]
-    pub marinade_state: Box<Account<'info, MarinadeState>>, // marinade state
+    pub marinade_state: Box<Account<'info, MarinadeState>>, // marinade state 8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC
     #[account(mut, address = marinade_state.msol_mint)]
-    pub msol_mint: Box<Account<'info, Mint>>,
+    pub msol_mint: Box<Account<'info, Mint>>, // mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So
     /// CHECK: trust me bro
     #[account(mut)]
-    pub liq_pool_sol_leg_pda: UncheckedAccount<'info>,
+    pub liq_pool_sol_leg_pda: UncheckedAccount<'info>, // UefNb6z6yvArqe4cJHTXCqStRsKmWhGxnZzuHbikP5Q
     /// CHECK: trust me bro
     #[account(mut)]
-    pub liq_pool_msol_leg: UncheckedAccount<'info>,
+    pub liq_pool_msol_leg: UncheckedAccount<'info>, // 7GgPYjS5Dza89wV6FpZ23kUJRG5vbQ1GM25ezspYFSoE
     /// CHECK: trust me bro
-    pub liq_pool_msol_leg_authority: UncheckedAccount<'info>,
+    pub liq_pool_msol_leg_authority: UncheckedAccount<'info>, // EyaSjUtSgo9aRD1f8LWXwdvkpDTmXAW54yoSHZRF14WL
     /// CHECK: trust me bro
     #[account(mut)]
-    pub reserve_pda: UncheckedAccount<'info>,
+    pub reserve_pda: UncheckedAccount<'info>, // Du3Ysj1wKbxPKkuPPnvzQLQh8oMSVifs3jGZjJWXFmHN
     #[account(
+        mut,
         token::mint = msol_mint,
         token::authority = vault,
     )]
     pub mint_to: Box<Account<'info, TokenAccount>>,
     /// CHECK: trust me bro
-    pub msol_mint_authority: UncheckedAccount<'info>,
+    pub msol_mint_authority: UncheckedAccount<'info>, // 3JLPCS1qM2zRw3Dp6V4hZnYHd4toMNPkNesXdX9tg6KM
     pub rent: Sysvar<'info, Rent>,
     /// CHECK: trust me bro
     pub system_program: UncheckedAccount<'info>,
     /// CHECK: trust me bro
     #[account(address = marinade_0_24_2::ID)]
-    pub marinade_finance_program: UncheckedAccount<'info>,
+    pub marinade_finance_program: UncheckedAccount<'info>, // MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD
 }
 
 impl<'info> Deposit<'info> {

@@ -20,6 +20,10 @@ pub mod altruism_finance {
         instructions::create_token_account::create_token_account(ctx)
     }
 
+    pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+        instructions::deposit::deposit(ctx, amount)
+    }
+
     // function for anyone to deposit SOL and get altSOL (backed by mSOL)
     pub fn mint_tokens(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         instructions::deposit::deposit(ctx, amount)

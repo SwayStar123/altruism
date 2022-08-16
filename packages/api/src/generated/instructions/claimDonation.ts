@@ -23,7 +23,6 @@ export const claimDonationStruct = new beet.BeetArgsStruct<{
  * Accounts required by the _claimDonation_ instruction
  *
  * @property [_writable_, **signer**] authority
- * @property [] vaultOwner
  * @property [_writable_] vault
  * @property [] globalSolVault
  * @property [_writable_] beneficiary
@@ -38,7 +37,6 @@ export const claimDonationStruct = new beet.BeetArgsStruct<{
  */
 export type ClaimDonationInstructionAccounts = {
   authority: web3.PublicKey;
-  vaultOwner: web3.PublicKey;
   vault: web3.PublicKey;
   globalSolVault: web3.PublicKey;
   beneficiary: web3.PublicKey;
@@ -73,11 +71,6 @@ export function createClaimDonationInstruction(
       pubkey: accounts.authority,
       isWritable: true,
       isSigner: true,
-    },
-    {
-      pubkey: accounts.vaultOwner,
-      isWritable: false,
-      isSigner: false,
     },
     {
       pubkey: accounts.vault,

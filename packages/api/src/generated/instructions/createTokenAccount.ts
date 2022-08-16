@@ -24,6 +24,7 @@ export const createTokenAccountStruct = new beet.BeetArgsStruct<{
  * Accounts required by the _createTokenAccount_ instruction
  *
  * @property [_writable_, **signer**] tokenAccount
+ * @property [] state
  * @property [] mint
  * @property [_writable_] beneficiary
  * @property [_writable_, **signer**] authority
@@ -33,6 +34,7 @@ export const createTokenAccountStruct = new beet.BeetArgsStruct<{
  */
 export type CreateTokenAccountInstructionAccounts = {
   tokenAccount: web3.PublicKey;
+  state: web3.PublicKey;
   mint: web3.PublicKey;
   beneficiary: web3.PublicKey;
   authority: web3.PublicKey;
@@ -63,6 +65,11 @@ export function createCreateTokenAccountInstruction(
       pubkey: accounts.tokenAccount,
       isWritable: true,
       isSigner: true,
+    },
+    {
+      pubkey: accounts.state,
+      isWritable: false,
+      isSigner: false,
     },
     {
       pubkey: accounts.mint,

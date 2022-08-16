@@ -19,6 +19,7 @@
   ],
   "devDependencies": {
     "@metaplex-foundation/amman": "^0.10.0",
+    "@metaplex-foundation/amman-client": "^0.1.0",
     "@metaplex-foundation/solita": "^0.12.2",
     "@typescript-eslint/eslint-plugin": "^5.30.7",
     "@typescript-eslint/parser": "^5.30.7",

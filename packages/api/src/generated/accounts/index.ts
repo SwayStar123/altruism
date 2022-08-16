@@ -1,7 +1,7 @@
+export * from './AltruismState';
 export * from './Beneficiary';
-export * from './State';
 
-import { State } from './State';
 import { Beneficiary } from './Beneficiary';
+import { AltruismState } from './AltruismState';
 
-export const accountProviders = { State, Beneficiary };
+export const accountProviders = { Beneficiary, AltruismState };

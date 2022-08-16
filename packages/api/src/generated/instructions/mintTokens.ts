@@ -36,7 +36,7 @@ export const mintTokensStruct = new beet.BeetArgsStruct<
 /**
  * Accounts required by the _mintTokens_ instruction
  *
- * @property [] state
+ * @property [_writable_] state
  * @property [_writable_] token
  * @property [_writable_] mint
  * @property [_writable_, **signer**] authority
@@ -47,7 +47,7 @@ export const mintTokensStruct = new beet.BeetArgsStruct<
  * @property [_writable_] liqPoolMsolLeg
  * @property [] liqPoolMsolLegAuthority
  * @property [_writable_] reservePda
- * @property [] mintTo
+ * @property [_writable_] mintTo
  * @property [] msolMintAuthority
  * @property [] marinadeFinanceProgram
  * @category Instructions
@@ -98,7 +98,7 @@ export function createMintTokensInstruction(
   const keys: web3.AccountMeta[] = [
     {
       pubkey: accounts.state,
-      isWritable: false,
+      isWritable: true,
       isSigner: false,
     },
     {
@@ -158,7 +158,7 @@ export function createMintTokensInstruction(
     },
     {
       pubkey: accounts.mintTo,
-      isWritable: false,
+      isWritable: true,
       isSigner: false,
     },
     {

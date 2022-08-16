@@ -33,6 +33,7 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
+    "@metaplex-foundation/amman-client": "^0.1.0",
     "@metaplex-foundation/beet": "0.4.0",
     "@metaplex-foundation/beet-solana": "^0.3.0",
     "@metaplex-foundation/cusper": "^0.0.2",
@@ -40,6 +41,7 @@
     "@solana/web3.js": "1.52.0"
   },
   "devDependencies": {
+    "@metaplex-foundation/amman-client": "^0.1.0",
     "eslint": "^8.3.0",
     "rimraf": "^3.0.2",
     "supports-color": "^9.2.1",
