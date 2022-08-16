@@ -3,6 +3,7 @@ target/
 .DS_Store
 **/.DS_Store
 .anchor/
+packages/api/docs
 
 node_modules/
 **/*.rs.bk
