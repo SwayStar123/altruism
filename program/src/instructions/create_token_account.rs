@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 
-use crate::state::beneficiary::Beneficiary;
+use crate::state::*;
 
 pub fn create_token_account(_ctx: Context<CreateTokenAccount>) -> Result<()> {
     Ok(())
@@ -20,7 +20,7 @@ pub struct CreateTokenAccount<'info> {
     #[account(
         init,
         payer = authority,
-        seeds = [b"beneficiary", authority.key().as_ref()],
+        seeds = [b"beneficiary".as_ref(), authority.key().as_ref()],
         bump,
         space = 8 + 8
     )]

@@ -1,9 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Burn, Mint, Token, TokenAccount};
 
-use crate::instructions::initialize::State;
-use crate::state::beneficiary::Beneficiary;
-use crate::state::msol_state::MsolState;
+use crate::state::*;
 
 use marinade_0_24_2::cpi;
 
@@ -26,7 +24,7 @@ pub fn order_unstake(ctx: Context<OrderUnstake>, unstake_amount: u64) -> Result<
 
 #[derive(Accounts)]
 pub struct OrderUnstake<'info> {
-    pub state: Box<Account<'info, State>>,
+    pub state: Box<Account<'info, AltruismState>>,
     #[account(mut, has_one = mint)]
     pub token: Box<Account<'info, TokenAccount>>,
     #[account(mut, address = state.alt_sol_mint_pubkey)]
@@ -35,13 +33,13 @@ pub struct OrderUnstake<'info> {
     pub authority: Signer<'info>,
     pub token_program: Program<'info, Token>,
     /// CHECK: trust me bro
-    #[account(mut, seeds=[b"vault"], bump)]
+    #[account(mut, seeds=[b"vault".as_ref()], bump)]
     pub vault: UncheckedAccount<'info>,
-    #[account(mut, seeds=[b"beneficiary", authority.key().as_ref()], bump)]
+    #[account(mut, seeds=[b"beneficiary".as_ref(), authority.key().as_ref()], bump)]
     pub beneficiary: Box<Account<'info, Beneficiary>>,
 
     #[account(mut)]
-    pub m_state: Box<Account<'info, marinade_0_24_2::State>>,
+    pub m_state: Box<Account<'info, MarinadeState>>,
     /// CHECK: trust me bro
     #[account(mut, address = m_state.msol_mint)]
     pub msol_mint: UncheckedAccount<'info>,

@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, MintTo, Token, TokenAccount};
 
-use crate::instructions::initialize::State;
+use crate::state::*;
 
 use marinade_0_24_2::cpi;
 
@@ -19,7 +19,7 @@ pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
 
 #[derive(Accounts)]
 pub struct Deposit<'info> {
-    pub state: Box<Account<'info, State>>,
+    pub state: Box<Account<'info, AltruismState>>,
     #[account(mut, has_one = mint)]
     pub token: Box<Account<'info, TokenAccount>>,
     #[account(mut, address = state.alt_sol_mint_pubkey)]
@@ -28,12 +28,12 @@ pub struct Deposit<'info> {
     pub authority: Signer<'info>,
     pub token_program: Program<'info, Token>,
     /// CHECK: trust me bro
-    #[account(mut, seeds=[b"msol_vault"], bump)]
+    #[account(mut, seeds=[b"msol_vault".as_ref()], bump)]
     pub vault: UncheckedAccount<'info>,
 
     // this part is equivalent to marinade-finance deposit instructions
     #[account(mut)]
-    pub marinade_state: Box<Account<'info, marinade_0_24_2::State>>, // marinade state
+    pub marinade_state: Box<Account<'info, MarinadeState>>, // marinade state
     #[account(mut, address = marinade_state.msol_mint)]
     pub msol_mint: Box<Account<'info, Mint>>,
     /// CHECK: trust me bro

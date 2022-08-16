@@ -1,4 +1,4 @@
-use marinade_0_24_2::State;
+pub use marinade_0_24_2::State as MarinadeState;
 
 pub trait MsolState {
     fn total_cooling_down(&self) -> u64;
@@ -8,7 +8,7 @@ pub trait MsolState {
     fn calc_lamports_from_msol_amount(&self, msol_amount: u64) -> u64;
 }
 
-impl MsolState for State {
+impl MsolState for MarinadeState {
     fn total_cooling_down(&self) -> u64 {
         self.stake_system
             .delayed_unstake_cooling_down

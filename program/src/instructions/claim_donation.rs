@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::system_instruction};
 
-use crate::state::beneficiary::Beneficiary;
+use crate::state::*;
 
 use marinade_0_24_2::cpi;
 
@@ -55,19 +55,19 @@ pub struct ClaimDonation<'info> {
     /// CHECK: trust me bro
     #[account(
         mut,
-        seeds=[b"msol_vault"], 
+        seeds=[b"msol_vault".as_ref()], 
         bump
     )]
     pub vault: UncheckedAccount<'info>,
     /// CHECK: trust me bro
     #[account(
-        seeds = [b"global_sol_vault"],
+        seeds = [b"global_sol_vault".as_ref()],
         bump
     )]
     pub global_sol_vault: UncheckedAccount<'info>,
     #[account(
         mut,
-        seeds = [b"beneficiary"],
+        seeds = [b"beneficiary".as_ref()],
         bump,
     )]
     pub beneficiary: Account<'info, Beneficiary>,
